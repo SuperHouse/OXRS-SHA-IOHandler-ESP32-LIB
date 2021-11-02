@@ -128,6 +128,7 @@ typedef void (*eventCallback)(uint8_t, uint8_t, uint8_t, uint8_t);
 class OXRS_Input
 {
   public:
+    // Initialise the input handler
     void begin(eventCallback, uint8_t defaultType=SWITCH);
 
     // Get/Set the input type
@@ -138,7 +139,7 @@ class OXRS_Input
     uint8_t getInvert(uint8_t input);
     void setInvert(uint8_t input, uint8_t invert);
 
-    // Process this set of button values and send events via onButtonPressed
+    // Call on each MCU loop to process input values and raise events
     void process(uint8_t id, uint16_t value);
 
   private:

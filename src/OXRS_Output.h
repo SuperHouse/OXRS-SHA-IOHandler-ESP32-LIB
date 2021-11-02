@@ -52,6 +52,7 @@ typedef void (*eventCallback)(uint8_t, uint8_t, uint8_t, uint8_t);
 class OXRS_Output
 {
   public:
+    // Initialise the output handler
     void begin(eventCallback, uint8_t defaultType=RELAY);
 
     // Get/Set the output type
