@@ -128,7 +128,7 @@ typedef void (*eventCallback)(uint8_t, uint8_t, uint8_t, uint8_t);
 class OXRS_Input
 {
   public:
-    OXRS_Input();
+    void begin(eventCallback, uint8_t defaultType=SWITCH);
 
     // Get/Set the input type
     uint8_t getType(uint8_t input);
@@ -141,16 +141,13 @@ class OXRS_Input
     // Process this set of button values and send events via onButtonPressed
     void process(uint8_t id, uint16_t value);
 
-    // Set callback function to be called when is button event is detected
-    void onEvent(eventCallback);
-
   private:
     // Configuration variables
     uint8_t _type[8];
     uint16_t _invert;
     
     // Input event callback
-    eventCallback _onEvent;
+    eventCallback _callback;
 
     // State variables    
     // _lastUpdateTime: the last time we processed an update, allows for efficient calculation 
