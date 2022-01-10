@@ -98,18 +98,6 @@ void OXRS_Output::process()
       uint8_t id = _state[i].data.id;  
       uint8_t state = _state[i].data.next;
       
-      uint8_t interlock = getInterlock(i);
-
-      // Check if output is interlocked and we are activating it
-      if (interlock != i && state == RELAY_ON)
-      {
-        // Safety check to ensure interlocked outputs can't be active at same time
-        if (_state[interlock].data.current == RELAY_ON)
-        {
-          continue;
-        }
-      }
-
       // Activate/deactivate the output as-per the timer
       _updateOutput(id, i, state);
     }
@@ -163,6 +151,19 @@ uint8_t OXRS_Output::_updateOutput(uint8_t id, uint8_t output, uint8_t state)
   if (_state[output].data.current == state)
   {
     return 0;
+  }
+
+  // Safety check to ensure interlocked outputs can't be active at same time
+  uint8_t interlock = getInterlock(output);
+
+  // Check if output is interlocked and we are activating it
+  if (interlock != output && state == RELAY_ON)
+  {
+    // If our interlocked output is active then we ignore this command
+    if (_state[interlock].data.current == RELAY_ON)
+    {
+      return 0;
+    }
   }
 
   // Check if we have a callback to handle events
