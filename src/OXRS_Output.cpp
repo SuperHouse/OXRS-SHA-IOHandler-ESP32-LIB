@@ -92,11 +92,26 @@ void OXRS_Output::process()
     // Check if this output is waiting for a delay that has expired
     if (_delayTime[i] > 0 && _eventTime[i] > _delayTime[i])
     {
+      // Clear timer now it has expired (so we don't re-process in the next loop)
+      _delayTime[i] = 0;
+
       uint8_t id = _state[i].data.id;  
       uint8_t state = _state[i].data.next;
+      
+      uint8_t interlock = getInterlock(i);
 
+      // Check if output is interlocked and we are activating it
+      if (interlock != i && state == RELAY_ON)
+      {
+        // Safety check to ensure interlocked outputs can't be active at same time
+        if (_state[interlock].data.current == RELAY_ON)
+        {
+          continue;
+        }
+      }
+
+      // Activate/deactivate the output as-per the timer
       _updateOutput(id, i, state);
-      _delayTime[i] = 0;
     }
   }
 }
