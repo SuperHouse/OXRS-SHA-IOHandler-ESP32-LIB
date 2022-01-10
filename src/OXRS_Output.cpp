@@ -92,14 +92,11 @@ void OXRS_Output::process()
     // Check if this output is waiting for a delay that has expired
     if (_delayTime[i] > 0 && _eventTime[i] > _delayTime[i])
     {
-      // Clear timer now it has expired (so we don't re-process in the next loop)
-      _delayTime[i] = 0;
-
       uint8_t id = _state[i].data.id;  
       uint8_t state = _state[i].data.next;
-      
-      // Activate/deactivate the output as-per the timer
+
       _updateOutput(id, i, state);
+      _delayTime[i] = 0;
     }
   }
 }
