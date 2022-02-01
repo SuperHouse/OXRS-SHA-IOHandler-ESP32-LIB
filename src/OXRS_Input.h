@@ -38,10 +38,19 @@
 #define INPUT_COUNT              16
 
 // Event constants
+// NOTE: 1 to BUTTON_MAX_CLICKS is used to report multi-click events
 #define NO_EVENT                 0
-#define LOW_EVENT                13
-#define HIGH_EVENT               14
-#define HOLD_EVENT               15
+#define LOW_EVENT                8
+#define HIGH_EVENT               9
+// BUTTON events
+#define HOLD_EVENT               10
+// ROTARY events
+#define UP_EVENT                 11
+#define DOWN_EVENT               12
+// SECURITY events
+#define ALARM_EVENT              13
+#define TAMPER_EVENT             14
+#define SHORT_EVENT              15
 
 // Rotary encoder state variables
 #define ROT_START                0x0
@@ -91,7 +100,7 @@ const unsigned char rotaryEvent[7][4] =
 };
 
 // Input types
-enum inputType_t { BUTTON, CONTACT, PRESS, ROTARY, SWITCH, TOGGLE };
+enum inputType_t { BUTTON, CONTACT, PRESS, ROTARY, SECURITY, SWITCH, TOGGLE };
 
 // Input states
 enum inputState_t { IS_HIGH, DEBOUNCE_LOW, IS_LOW, DEBOUNCE_HIGH, AWAIT_MULTI };
@@ -110,7 +119,7 @@ union inputData_t
 // Callback type for onEvent(uint8_t id, uint8_t button, uint8_t state)
 //  * `id` is a custom id (user defined, passed to process()) 
 //  * `input` is the input number (0 -> INPUT_COUNT - 1)
-//  * `type` is one of BUTTON, CONTACT, PRESS, ROTARY, SWITCH or TOGGLE
+//  * `type` is one of BUTTON, CONTACT, PRESS, ROTARY, SECURITY, SWITCH or TOGGLE
 //  * `state` is one of;
 //    [for BUTTON]
 //    - 1, 2, .. MAX_CLICKS   = number of presses (i.e. multi-click)
@@ -123,6 +132,10 @@ union inputData_t
 //    [for ROTARY]
 //    - UP_EVENT              = clockwise
 //    - DOWN_EVENT            = counter-clockwise
+//    [for SECURITY]
+//    - ALARM_EVENT           = alarm
+//    - TAMPER_EVENT          = tamper
+//    - SHORT_EVENT           = short
 typedef void (*eventCallback)(uint8_t, uint8_t, uint8_t, uint8_t);
 
 class OXRS_Input

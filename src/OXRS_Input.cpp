@@ -126,9 +126,12 @@ void OXRS_Input::_update(uint8_t event[], uint16_t value)
   _lastUpdateTime = millis();
 
   // Read rotary encoder values in pairs (gaps allowed)
-  uint8_t rotaryReady = 0;
-  uint8_t rotaryValue1;
-  uint8_t rotaryValue2;
+  uint8_t rotaryCount = 0;
+  uint8_t rotaryValue[2];
+  
+  // Read security sensor values in quads (a full port)
+  uint8_t securityCount = 0;
+  uint8_t securityValue[4];
   
   // Process each button (this is not doing any I/O)
   for (uint8_t i = 0; i < INPUT_COUNT; i++)
@@ -144,24 +147,52 @@ void OXRS_Input::_update(uint8_t event[], uint16_t value)
 
     if (type == ROTARY)
     {
-      if (rotaryReady == 0)
-      {
-        rotaryValue1 = _getValue(value, i);
-        rotaryReady = 1;
-      }
-      else
-      {
-        rotaryValue2 = _getValue(value, i);
-        rotaryReady = 0;
-        
+      rotaryValue[rotaryCount++] = _getValue(value, i);      
+
+      // Check if we have enough data to determine the rotary event
+      if (rotaryCount == 2)
+      {        
         // Get the encoder (gray) state, now we have values for both inputs
-        unsigned char encoderState = rotaryValue2 << 1 | rotaryValue1;
+        unsigned char encoderState = rotaryValue[1] << 1 | rotaryValue[0];
 
         // Check if this event generates an output (before updating state below)
         event[i] = rotaryEvent[_state[i].data.state][encoderState];
 
         // Update the state from our state table
         _state[i].data.state = rotaryState[_state[i].data.state][encoderState];
+
+        // Reset for the next rotary encoder
+        rotaryCount = 0;
+      }
+    }
+    if (type == SECURITY)
+    {
+      securityValue[securityCount++] = _getValue(value, i);      
+
+      if (securityCount == 4)
+      {
+        // Security sensor logic table
+        // State      CH1   CH2   CH3   CH4       I/O Event
+        // NORMAL     OFF   ON    OFF   ON    =>  NO_EVENT
+        // ALARM      OFF   ON    ON    ON    =>  ALARM_EVENT
+        // TAMPER     ON    OFF   ON    ON    =>  TAMPER_EVENT
+        // SHORT      OFF   ON    OFF   OFF   =>  SHORT_EVENT
+
+        if (securityValue[0] == HIGH && securityValue[1] == LOW && securityValue[2] == LOW && securityValue[3] == LOW)
+        {
+          event[i] = ALARM_EVENT;
+        }
+        else if (securityValue[0] == LOW && securityValue[1] == HIGH && securityValue[2] == LOW && securityValue[3] == LOW)
+        {
+          event[i] = TAMPER_EVENT;
+        }
+        else if (securityValue[0] == HIGH && securityValue[1] == LOW && securityValue[2] == HIGH && securityValue[3] == HIGH)
+        {
+          event[i] = SHORT_EVENT;
+        }
+
+        // Reset for the next security sensor
+        securityCount = 0;
       }
     }
     else
