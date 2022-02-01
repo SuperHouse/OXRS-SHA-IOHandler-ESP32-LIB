@@ -118,6 +118,65 @@ uint16_t OXRS_Input::_getDebounceHighTime(uint8_t type)
       return OTHER_DEBOUNCE_HIGH_MS;
   }
 }
+  
+uint8_t OXRS_Input::_getSecurityState(uint8_t securityValue[])
+{
+  // Security sensor logic table (using our internal state constants)
+  //
+  // Sensor     CH1   CH2   CH3   CH4       State           Event
+  // -------------------------------------------------------------------
+  // NORMAL     OFF   ON    OFF   ON    =>  IS_HIGH         HIGH_EVENT
+  // ALARM      OFF   ON    ON    ON    =>  IS_LOW          LOW_EVENT
+  // TAMPER     ON    OFF   ON    ON    =>  DEBOUNCE_LOW    TAMPER_EVENT
+  // SHORT      OFF   ON    OFF   OFF   =>  DEBOUNCE_HIGH   SHORT_EVENT
+
+  // NORMAL
+  if (securityValue[0] == HIGH && securityValue[1] == LOW && securityValue[2] == HIGH && securityValue[3] == LOW)
+  {
+    return IS_HIGH;
+  }
+
+  // ALARM
+  if (securityValue[0] == HIGH && securityValue[1] == LOW && securityValue[2] == LOW && securityValue[3] == LOW)
+  {
+    return IS_LOW;
+  }
+  
+  // TAMPER
+  if (securityValue[0] == LOW && securityValue[1] == HIGH && securityValue[2] == LOW && securityValue[3] == LOW)
+  {
+    return DEBOUNCE_LOW;
+  }
+  
+  // SHORT
+  if (securityValue[0] == HIGH && securityValue[1] == LOW && securityValue[2] == HIGH && securityValue[3] == HIGH)
+  {
+    return DEBOUNCE_HIGH;
+  }
+
+  // Ignore any other states
+  return AWAIT_MULTI;
+}
+
+uint8_t OXRS_Input::_getSecurityEvent(uint8_t securityState)
+{
+  switch (securityState)
+  {
+    case IS_HIGH:
+      return HIGH_EVENT;
+      
+    case IS_LOW:
+      return LOW_EVENT;
+      
+    case DEBOUNCE_LOW:
+      return TAMPER_EVENT;
+      
+    case DEBOUNCE_HIGH:
+      return SHORT_EVENT;
+  }
+
+  return NO_EVENT;
+}
 
 void OXRS_Input::_update(uint8_t event[], uint16_t value) 
 {
@@ -171,26 +230,15 @@ void OXRS_Input::_update(uint8_t event[], uint16_t value)
 
       if (securityCount == 4)
       {
-        // Security sensor logic table
-        // State      CH1   CH2   CH3   CH4       I/O Event
-        // NORMAL     OFF   ON    OFF   ON    =>  NO_EVENT
-        // ALARM      OFF   ON    ON    ON    =>  ALARM_EVENT
-        // TAMPER     ON    OFF   ON    ON    =>  TAMPER_EVENT
-        // SHORT      OFF   ON    OFF   OFF   =>  SHORT_EVENT
+        uint8_t securityState = _getSecurityState(securityValue);
 
-        if (securityValue[0] == HIGH && securityValue[1] == LOW && securityValue[2] == LOW && securityValue[3] == LOW)
+        // Only generate an event if the state has changed
+        if (_state[i].data.state != securityState)
         {
-          event[i] = ALARM_EVENT;
+          _state[i].data.state = securityState;
+          event[i] = _getSecurityEvent(securityState);
         }
-        else if (securityValue[0] == LOW && securityValue[1] == HIGH && securityValue[2] == LOW && securityValue[3] == LOW)
-        {
-          event[i] = TAMPER_EVENT;
-        }
-        else if (securityValue[0] == HIGH && securityValue[1] == LOW && securityValue[2] == HIGH && securityValue[3] == HIGH)
-        {
-          event[i] = SHORT_EVENT;
-        }
-
+        
         // Reset for the next security sensor
         securityCount = 0;
       }
@@ -302,4 +350,4 @@ void OXRS_Input::_update(uint8_t event[], uint16_t value)
       }
     }
   }
-}    
+}

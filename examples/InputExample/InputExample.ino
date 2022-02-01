@@ -129,10 +129,10 @@ void getEventType(char eventType[], uint8_t type, uint8_t state)
     case ROTARY:
       switch (state)
       {
-        case UP_EVENT:
+        case LOW_EVENT:
           sprintf_P(eventType, PSTR("UP"));
           break;
-        case DOWN_EVENT:
+        case HIGH_EVENT:
           sprintf_P(eventType, PSTR("DOWN"));
           break;
       }
@@ -140,7 +140,10 @@ void getEventType(char eventType[], uint8_t type, uint8_t state)
     case SECURITY:
       switch (state)
       {
-        case ALARM_EVENT:
+        case HIGH_EVENT:
+          sprintf_P(eventType, PSTR("NORMAL"));
+          break;
+        case LOW_EVENT:
           sprintf_P(eventType, PSTR("ALARM"));
           break;
         case TAMPER_EVENT:

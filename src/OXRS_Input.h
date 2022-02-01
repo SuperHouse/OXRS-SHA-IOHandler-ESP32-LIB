@@ -40,15 +40,11 @@
 // Event constants
 // NOTE: 1 to BUTTON_MAX_CLICKS is used to report multi-click events
 #define NO_EVENT                 0
-#define LOW_EVENT                8
-#define HIGH_EVENT               9
+#define LOW_EVENT                11
+#define HIGH_EVENT               12
 // BUTTON events
-#define HOLD_EVENT               10
-// ROTARY events
-#define UP_EVENT                 11
-#define DOWN_EVENT               12
+#define HOLD_EVENT               13
 // SECURITY events
-#define ALARM_EVENT              13
 #define TAMPER_EVENT             14
 #define SHORT_EVENT              15
 
@@ -130,10 +126,11 @@ union inputData_t
 //    [for PRESS]
 //    - LOW_EVENT             = HIGH -> LOW transition
 //    [for ROTARY]
-//    - UP_EVENT              = clockwise
-//    - DOWN_EVENT            = counter-clockwise
+//    - LOW_EVENT             = clockwise
+//    - HIGH_EVENT            = counter-clockwise
 //    [for SECURITY]
-//    - ALARM_EVENT           = alarm
+//    - HIGH_EVENT            = normal
+//    - LOW_EVENT             = alarm
 //    - TAMPER_EVENT          = tamper
 //    - SHORT_EVENT           = short
 typedef void (*eventCallback)(uint8_t, uint8_t, uint8_t, uint8_t);
@@ -178,6 +175,9 @@ class OXRS_Input
     uint8_t _getValue(uint16_t value, uint8_t input);
     uint16_t _getDebounceLowTime(uint8_t type);
     uint16_t _getDebounceHighTime(uint8_t type);
+    
+    uint8_t _getSecurityState(uint8_t securityValue[]);
+    uint8_t _getSecurityEvent(uint8_t securityState);
     
     void _update(uint8_t state[], uint16_t value);
 };
